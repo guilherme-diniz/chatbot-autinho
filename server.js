@@ -4,10 +4,10 @@ let Lime = require('lime-js');
 let WebSocketTransport = require('lime-transport-websocket');
 let MessagingHub = require('messaginghub-client');
 let request = require('request-promise');
-
-let FlowOne = require('./MessagingHubHttpClient');
+let FlowOne = require('./FlowOne');
 
 var userState = 0;
+var flowSelection = 0;
 // These are the MessagingHub credentials for this bot.
 // If you want to create your own bot, see http://blip.ai
 const IDENTIFIER = 'autozinho';
@@ -20,6 +20,8 @@ var client = new MessagingHub.ClientBuilder()
     .withTransportFactory(() => new WebSocketTransport())
     .build();
 
+var flowOne = new FlowOne(client);
+
 // Conecta com o servidor de forma assíncrona.
 // A conexão ocorre via websocket, na porta 8081.
 client.connect()
@@ -28,9 +30,7 @@ client.connect()
 
 // Registra um receiver para mensagens do tipo 'text/plain'
 client.addMessageReceiver('text/plain', function(message) {
-  console.log("\nMessage Received: " + message.content);
   var uri = "lime://messenger.gw.msging.net/accounts/" + message.from.split("@")[0]
-  console.log("\nLime Uri: " + uri);
 
   var command = {
     id: 1,
@@ -41,14 +41,18 @@ client.addMessageReceiver('text/plain', function(message) {
 
   client.sendCommand(command)
     .then(function(response) {
-      var msg = "Olá";
       console.log("\nUser State: " + userState);
+      var msg;
       switch (userState) {
         case 0:
           msg = helloMessage(response, message);
           break;
+        case 1:
+          msg = getUserData(response, message);
+          break;
         default :
-          msg = notUnderstandMessage(response, message);
+          msg = selectFlow(response, message);
+          // msg = notUnderstandMessage(response, message);
       };
       console.log("\nSent Message" + msg);
       client.sendMessage(msg);
@@ -104,6 +108,14 @@ function helloMessage(response, message){
   return buildMenuMessage(message.from, text, options);
 }
 
+function getUserData(response, message) {
+    var msgContent = "Ok "+ response.resource.fullName +"! Mas antes de tudo eu preciso saber o seu CPF, para que eu possa te encontrar no meu banco de dados";
+
+    userState = 2;
+    flowSelection = parseInt(message.content);
+    return buildTextMessage(msgContent, message.from);
+}
+
 function byeMessage(message){
   var msgContent = "Ok então! Precisando é só me chamar ;)";
   return buildTextMessage(msgContent, message.from);
@@ -127,4 +139,18 @@ function canIHelpMessage(message){
     }
   ];
   return buildMenuMessage(message.from, msgContent, options);
+}
+
+function selectFlow(response, message) {
+  console.log(flowSelection);
+  switch (flowSelection) {
+    case 1:
+        return flowOne.do(response, message);
+    case 2:
+        return FlowTwo.do(response, message);
+    case 3:
+        return FlowThree.do(response, message);
+    default:
+        return notUnderstandMessage(response, message);
+  }
 }
