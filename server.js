@@ -4,7 +4,9 @@ let Lime = require('lime-js');
 let WebSocketTransport = require('lime-transport-websocket');
 let MessagingHub = require('messaginghub-client');
 let request = require('request-promise');
+
 let FlowOne = require('./FlowOne');
+let FlowTwo = require('./FlowTwo');
 let FlowThree = require('./FlowThree');
 
 var userState = 0;
@@ -22,6 +24,7 @@ var client = new MessagingHub.ClientBuilder()
     .build();
 
 var flowOne = new FlowOne(client);
+var flowTwo = new FlowTwo(client);
 var flowThree = new FlowThree(client);
 
 // Conecta com o servidor de forma assíncrona.
@@ -54,9 +57,7 @@ client.addMessageReceiver('text/plain', function(message) {
           break;
         default :
           msg = selectFlow(response, message);
-          // msg = notUnderstandMessage(response, message);
       };
-      console.log("\nSent Message" + msg);
       client.sendMessage(msg);
     }).catch((err) => console.error(err));
 
@@ -119,6 +120,7 @@ function getUserData(response, message) {
 }
 
 function byeMessage(message){
+  userState = 0;
   var msgContent = "Ok então! Precisando é só me chamar ;)";
   return buildTextMessage(msgContent, message.from);
 }
@@ -143,13 +145,13 @@ function canIHelpMessage(message){
   return buildMenuMessage(message.from, msgContent, options);
 }
 
-function selectFlow(response, message) {
+function selectFlow(response, message) {  
   console.log(flowSelection);
   switch (flowSelection) {
     case 1:
         return flowOne.do(response, message);
     case 2:
-        return FlowTwo.do(response, message);
+        return flowTwo.do(response, message);
     case 3:
         return flowThree.do(response, message);
     default:

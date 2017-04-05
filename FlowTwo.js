@@ -1,14 +1,14 @@
 'use strict';
 let Lime = require('lime-js');
 
-class FlowThree {
+class FlowTwo {
 	constructor(client) {
 		this._userState = 2;
 		this._client = client;
 	}
 
 	do (response, message) {
-		console.log("Fluxo 3." + this._userState);
+		console.log("Fluxo 2." + this._userState);
 		var msg = this._notUnderstandMessage(response, message);
 		switch (this._userState){
 			case 2:
@@ -16,9 +16,9 @@ class FlowThree {
 			case 3:
 				return this._level3Message(response, message);
 			case 4:
-				return this._level4Question1(response, message);
+				return this._level4Message(response, message);
 			case 5:
-				return this._level5Question2(response, message);
+				return this._level5Message(response, message);
 			case 6:
 				return this._level6Message(response, message);
 			case 7:
@@ -30,7 +30,7 @@ class FlowThree {
 
 	_level2Message(response, message) {
 		this._userState = 3;
-		var msgContent = "Ok, te achei! Então, pelo o que eu vi esses são os seus dados: \n\nNome: "+ response.resource.fullName +"\nIdade: 26 anos\nÚltimo pagamento: 10/2\nDia de vencimento: dia 5\n\n Esse é você mesmo? ";
+		var msgContent = "Ok, te achei! Então, pelo o que eu vi esses são os seus dados: \n\nNome: Lucas Bhering\nIdade: 26 anos\nVeículo: Fusca Azul\nPagamentos atrasados: 6/20";
 		var options = [
 		  {
 		    "order": 1,
@@ -47,94 +47,89 @@ class FlowThree {
 
 	_level3Message(response, message) {
 		this._userState = 4;
-		var msgContent = "Então " + response.resource.fullName + " eu posso te ajudar com uma das opções abaixo:";
+		var msgContent = "Então " + response.resource.fullName + ", eu posso emitir a 2ª via do boleto para você sem problemas!\nVocê deseja receber por email ou pegar o código do boleto por aqui?";
 		var options = [
 		  {
 		    "order": 1,
-		    "text": "Mudar vencimento"
+		    "text": "Receber por email"
 		  },
 		  {
 		    "order": 2,
-		    "text": "Lembrar do pagamento"
-		  },
+		    "text": "Pegar código aqui"
+		  }
 		];
 		return this._buildMenuMessage(message.from, msgContent, options);
 	}
 
-	_level4Question1(response, message) {
+	_level4Message(response, message) {
 		var resp = parseInt(message.content);
 		var msgContent;
-		var options;
+		var msg;
 
-		if (resp == 1) {
+		if(resp == 1) {
 			this._userState = 5;
-			msgContent = "Ok! O seu dia atual é dia 5. Você deseja mudar para qual dia?";
-			options = [
-			  {
-			    "order": 1,
-			    "text": "Dia 05"
-			  },
-			  {
-			    "order": 2,
-			    "text": "Dia 10"
-			  },
-			  {
-			    "order": 3,
-			    "text": "Dia 20"
-			  },
+			msgContent = "Ok! Então só me confirma isso: o seu email é persona.persona@gmail.com?";
+			var options = [
+				{
+					"order": 1,
+					"text": "Sim"
+				},
+				{
+					"order": 2,
+					"text": "Não"
+				}
 			];
-		} else {
-			this._userState = 6;
-			msgContent = "Ok, posso te lembrar quando o próximo boleto estiver vencendo, por aqui ou por email. Deseja que eu faça isso por onde?";
-			options = [
-			  {
-			    "order": 1,
-			    "text": "Por aqui"
-			  },
-			  {
-			    "order": 2,
-			    "text": "Por email"
-			  }
+			msg = this._buildMenuMessage(message.from, msgContent, options);
+		} else if (resp == 2) {
+			this._userState = 7;
+			msgContent = "Aqui está o número do seu boleto : 1234567890 12345678901 23456789012 3 45678901234567\nPosso ajudar em algo mais?";
+			var options = [
+				{
+					"order": 1,
+					"text": "Sim"
+				},
+				{
+					"order": 2,
+					"text": "Não"
+				}
 			];
-		}
-
-
-		return this._buildMenuMessage(message.from, msgContent, options);
+			msg = this._buildMenuMessage(message.from, msgContent, options);
+		}		
+		return msg;
 	}
 
-	_level5Question2(response, message) {
+	_level5Message(response, message) {
 		this._userState = 6;
-		var msgContent = "Ok, a data do seu vencimento foi alterada do dia 5 para o dia 15. Ah, e aproveitando a deixa, uma dica: Se você quiser, posso te lembrar quando o próximo boleto estiver vencendo, por aqui ou por email. Deseja que eu faça isso?";
+		var msgContent = "Ok! Em instantes você receberá meu email. Ah, e aproveitando a deixa, uma dica: Se você quiser, posso te lembrar quando o próximo boleto estiver vencendo, por aqui ou por email.\nDeseja que eu faça isso?"
 		var options = [
 		  {
 		    "order": 1,
-		    "text": "Sim, por aqui"
-		  },
-		  {
-		    "order": 2,
 		    "text": "Sim, por email"
 		  },
 		  {
-		  	"order": 3,
-		  	"text": "Não"
+		    "order": 2,
+		    "text": "Sim, por aqui"
+		  },
+		  {
+		    "order": 3,
+		    "text": "Não, obrigada"
 		  }
 		];
 		return this._buildMenuMessage(message.from, msgContent, options);
 	}
 
 	_level6Message(response, message){
+		this._userState = 7;
 		var resp = parseInt(message.content);
 		var msgContent;
-
+		
 		if (resp == 1) {
-			msgContent = "Entendido! Quando faltar 5 dias para o próximo boleto vencer, vou enviar uma mensagem por aqui, tudo bem? E posso ajudar em algo mais?"
-		} else if (resp == 2) {
-			msgContent = "Entendido! Quando faltar 5 dias para o próximo boleto vencer, vou enviar uma mensagem por email, tudo bem? E posso ajudar em algo mais?"
-		} else if (resp == 3) {
-			msgContent = "Entendido! Posso ajudar em algo mais?"
+			msgContent = "Entendido! Quando faltar 5 dias para o próximo boleto vencer, vou enviar uma mensagem por aqui. Posso te ajudar com algo mais?"
+		} else if(resp == 2) {
+			msgContent = "Entendido! Quando faltar 5 dias para o próximo boleto vencer, vou enviar um email. Posso te ajudar com algo mais?"
+		} else {
+			msgContent = "Entendido! Posso ajudar em algo mais?";
 		}
-
-		this._userState = 7;
 		var options = [
 		  {
 		    "order": 1,
@@ -147,7 +142,6 @@ class FlowThree {
 		];
 		return this._buildMenuMessage(message.from, msgContent, options);
 	}
-
 
 	 _byeMessage(message){
 	 	this._userState = 0;
@@ -197,4 +191,4 @@ class FlowThree {
 	}
 }
 
-module.exports = FlowThree;
+module.exports = FlowTwo;
