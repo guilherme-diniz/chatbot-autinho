@@ -5,6 +5,7 @@ let WebSocketTransport = require('lime-transport-websocket');
 let MessagingHub = require('messaginghub-client');
 let request = require('request-promise');
 let FlowOne = require('./FlowOne');
+let FlowThree = require('./FlowThree');
 
 var userState = 0;
 var flowSelection = 0;
@@ -21,6 +22,7 @@ var client = new MessagingHub.ClientBuilder()
     .build();
 
 var flowOne = new FlowOne(client);
+var flowThree = new FlowThree(client);
 
 // Conecta com o servidor de forma assíncrona.
 // A conexão ocorre via websocket, na porta 8081.
@@ -149,7 +151,7 @@ function selectFlow(response, message) {
     case 2:
         return FlowTwo.do(response, message);
     case 3:
-        return FlowThree.do(response, message);
+        return flowThree.do(response, message);
     default:
         return notUnderstandMessage(response, message);
   }
