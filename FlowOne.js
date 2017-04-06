@@ -175,15 +175,26 @@ class FlowOne {
 
     _level7Message(response, message) {
         var resp = parseInt(message.content);
-        var msg;
+        var options;
+        var msgContent;
 
         if (resp == 1) {
-            this._userState = 4;
-            msg = this._level3Message(response, message);
+            this._userState = 8;
+            msgContent = "Que ótimo!. Passei seus dados para o pessoal do financeiro (inclusive seus pontos) e em breve eles vão te ligar para que juntos vocês possam resolver isso, tudo bem?"
+            options = [
+                {
+                    "order": 1,
+                    "text": "Claro!"
+                },
+                {
+                    "order": 2,
+                    "text": "Pode ser email?"
+                }
+            ];
         } else {
             this._userState = 8;
-            var msgContent = "Entendo. Passei seus dados para o pessoal do financeiro e em breve eles vão te ligar para que juntos vocês possam resolver isso, tudo bem?"
-            var options = [
+            msgContent = "Entendo. Passei seus dados para o pessoal do financeiro e em breve eles vão te ligar para que juntos vocês possam resolver isso, tudo bem?"
+            options = [
                 {
                     "order": 1,
                     "text": "Claro!"
@@ -196,7 +207,7 @@ class FlowOne {
             msgContent = this._buildMenuMessage(message.from, msgContent, options);
         }
 
-        return msg;
+        return msgContent;
     }
 
     _level8Message(response, message) {
