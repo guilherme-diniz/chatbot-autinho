@@ -1,5 +1,8 @@
 'use strict';
 let Lime = require('lime-js');
+let Globals = require('./Globals');
+let Functions = require('./Functions');
+var functions = new Functions();
 
 class FlowThree {
 	constructor(client) {
@@ -22,7 +25,7 @@ class FlowThree {
 			case 6:
 				return this._level6Message(response, message);
 			case 7:
-				return this._byeMessage(message);
+				return this._byeMessage(response, message);
 			default:
 				return this._notUnderstandMessage(response, message);
 		}
@@ -46,18 +49,24 @@ class FlowThree {
 	}
 
 	_level3Message(response, message) {
-		this._userState = 4;
-		var msgContent = "Então " + response.resource.fullName + " eu posso te ajudar com uma das opções abaixo:";
-		var options = [
-		  {
-		    "order": 1,
-		    "text": "Mudar vencimento"
-		  },
-		  {
-		    "order": 2,
-		    "text": "Lembrar do pagamento"
-		  },
-		];
+        	var resp = parseInt(message.content);
+    		if (resp == 1) {
+			this._userState = 4;
+			var msgContent = "Então " + response.resource.fullName + " eu posso te ajudar com uma das opções abaixo:";
+			var options = [
+			  {
+			    "order": 1,
+			    "text": "Mudar vencimento"
+			  },
+			  {
+			    "order": 2,
+			    "text": "Lembrar do pagamento"
+			  },
+			];
+		} else if (resp == 2) {
+	      	this._userState = 2;
+	      	return functions.getUserDataAgain(response, message);
+	      }
 		return this._buildMenuMessage(message.from, msgContent, options);
 	}
 
@@ -72,11 +81,11 @@ class FlowThree {
 			options = [
 			  {
 			    "order": 1,
-			    "text": "Dia 05"
+			    "text": "Dia 10"
 			  },
 			  {
 			    "order": 2,
-			    "text": "Dia 10"
+			    "text": "Dia 15"
 			  },
 			  {
 			    "order": 3,
@@ -103,8 +112,9 @@ class FlowThree {
 	}
 
 	_level5Question2(response, message) {
+		day = parseInt(message.content) == 1 ? 10 : parseInt(message.content) == 2 ? 15 : 20;
 		this._userState = 6;
-		var msgContent = "Ok, a data do seu vencimento foi alterada do dia 5 para o dia 15. Ah, e aproveitando a deixa, uma dica: Se você quiser, posso te lembrar quando o próximo boleto estiver vencendo, por aqui ou por email. Deseja que eu faça isso?";
+		var msgContent = "Ok, a data do seu vencimento foi alterada do dia 5 para o dia " + day + ". Ah, e aproveitando a deixa, uma dica: Se você quiser, posso te lembrar quando o próximo boleto estiver vencendo, por aqui ou por email. Deseja que eu faça isso?";
 		var options = [
 		  {
 		    "order": 1,
@@ -116,7 +126,7 @@ class FlowThree {
 		  },
 		  {
 		  	"order": 3,
-		  	"text": "Não"
+		  	"text": "Não, obrigado"
 		  }
 		];
 		return this._buildMenuMessage(message.from, msgContent, options);
@@ -149,11 +159,19 @@ class FlowThree {
 	}
 
 
-	 _byeMessage(message){
-	 	this._userState = 0;
-		var msgContent = "Ok então! Precisando é só me chamar ;)";
-		return this._buildTextMessage(msgContent, message.from);
-	}
+	_byeMessage(response, message){
+	    	var resp = parseInt(message.content);
+	    	var msgContent;
+	 	if (resp == 1) {
+	 		return functions.helloMessage(response, message);
+	 	} else if (resp == 2) {
+	        	var msgContent = "Ok então! Precisando é só me chamar ;)";
+        	}
+
+        	this._userState = 2;
+	      Globals.userState = 0;
+        	return this._buildTextMessage(msgContent, message.from);
+    }
 
 	 _notUnderstandMessage(response, message){
 		var msgContent = "Desculpe "+ response.resource.fullName +", não consegui te entender. Vamos tentar de novo?";

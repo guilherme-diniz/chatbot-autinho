@@ -1,5 +1,8 @@
 'use strict';
 let Lime = require('lime-js');
+let Globals = require('./Globals');
+let Functions = require('./Functions');
+var functions = new Functions();
 
 class FlowTwo {
 	constructor(client) {
@@ -22,7 +25,7 @@ class FlowTwo {
 			case 6:
 				return this._level6Message(response, message);
 			case 7:
-				return this._byeMessage(message);
+				return this._byeMessage(response, message);
 			default:
 				return this._notUnderstandMessage(response, message);
 		}
@@ -30,7 +33,7 @@ class FlowTwo {
 
 	_level2Message(response, message) {
 		this._userState = 3;
-		var msgContent = "Ok, te achei! Então, pelo o que eu vi esses são os seus dados: \n\nNome: " + response.resource.fullName + "\nIdade: 26 anos\nVeículo: Fusca Azul\nPagamentos atrasados: 6/20";
+		var msgContent = "Ok, te achei! Então, pelo o que eu vi esses são os seus dados: \n\nNome: " + response.resource.fullName + "\nIdade: 26 anos\nVeículo: Fusca Azul\n Boleto em atraso: 10/3\n\n Esse são seus dados?";
 		var options = [
 		  {
 		    "order": 1,
@@ -46,18 +49,24 @@ class FlowTwo {
 	}
 
 	_level3Message(response, message) {
-		this._userState = 4;
-		var msgContent = "Então " + response.resource.fullName + ", eu posso emitir a 2ª via do boleto para você sem problemas!\nVocê deseja receber por email ou pegar o código do boleto por aqui?";
-		var options = [
-		  {
-		    "order": 1,
-		    "text": "Receber por email"
-		  },
-		  {
-		    "order": 2,
-		    "text": "Pegar código aqui"
-		  }
-		];
+		var resp = parseInt(message.content);
+    		if (resp == 1) {
+			this._userState = 4;
+			var msgContent = "Então " + response.resource.fullName + ", eu posso emitir a 2ª via do boleto para você sem problemas!\nVocê deseja receber por email ou pegar a linha digitável por aqui?";
+			var options = [
+			  {
+			    "order": 1,
+			    "text": "Receber por email"
+			  },
+			  {
+			    "order": 2,
+			    "text": "Pegar aqui"
+			  }
+			];
+		} else if (resp == 2) {
+	      	this._userState = 2;
+	      	return functions.getUserDataAgain(response, message);
+	      }
 		return this._buildMenuMessage(message.from, msgContent, options);
 	}
 
@@ -94,7 +103,7 @@ class FlowTwo {
 				}
 			];
 			msg = this._buildMenuMessage(message.from, msgContent, options);
-		}		
+		}
 		return msg;
 	}
 
@@ -122,7 +131,7 @@ class FlowTwo {
 		this._userState = 7;
 		var resp = parseInt(message.content);
 		var msgContent;
-		
+
 		if (resp == 1) {
 			msgContent = "Entendido! Quando faltar 5 dias para o próximo boleto vencer, vou enviar uma mensagem por aqui. Posso te ajudar com algo mais?"
 		} else if(resp == 2) {
@@ -143,11 +152,19 @@ class FlowTwo {
 		return this._buildMenuMessage(message.from, msgContent, options);
 	}
 
-	 _byeMessage(message){
-	 	this._userState = 0;
-		var msgContent = "Ok então! Precisando é só me chamar ;)";
-		return this._buildTextMessage(msgContent, message.from);
-	}
+	_byeMessage(response, message){
+	    	var resp = parseInt(message.content);
+	    	var msgContent;
+	 	if (resp == 1) {
+	 		return functions.helloMessage(response, message);
+	 	} else if (resp == 2) {
+	        	var msgContent = "Ok então! Precisando é só me chamar ;)";
+        	}
+
+        	this._userState = 2;
+	      Globals.userState = 0;
+        	return this._buildTextMessage(msgContent, message.from);
+    }
 
 	 _notUnderstandMessage(response, message){
 		var msgContent = "Desculpe "+ response.resource.fullName +", não consegui te entender. Vamos tentar de novo?";

@@ -4,13 +4,13 @@ let Lime = require('lime-js');
 let WebSocketTransport = require('lime-transport-websocket');
 let MessagingHub = require('messaginghub-client');
 let request = require('request-promise');
+let Globals = require('./Globals');
+let Functions = require('./Functions');
 
 let FlowOne = require('./FlowOne');
 let FlowTwo = require('./FlowTwo');
 let FlowThree = require('./FlowThree');
 
-var userState = 0;
-var flowSelection = 0;
 // These are the MessagingHub credentials for this bot.
 // If you want to create your own bot, see http://blip.ai
 const IDENTIFIER = 'autozinho';
@@ -26,11 +26,14 @@ var client = new MessagingHub.ClientBuilder()
 var flowOne = new FlowOne(client);
 var flowTwo = new FlowTwo(client);
 var flowThree = new FlowThree(client);
+var functions = new Functions();
 
 // Conecta com o servidor de forma assíncrona.
 // A conexão ocorre via websocket, na porta 8081.
 client.connect()
-    .then(() => console.log('Listening...'))
+    .then(() => {
+    	console.log('Listening...')
+    })
     .catch((err) => console.error(err));
 
 // Registra um receiver para mensagens do tipo 'text/plain'
@@ -46,19 +49,16 @@ client.addMessageReceiver('text/plain', function(message) {
 
   client.sendCommand(command)
     .then(function(response) {
-      console.log("\nUser State: " + userState);
+      console.log("\nUser State: " + Globals.userState);
       var msg;
-      switch (userState) {
-        case 0:
-          msg = helloMessage(response, message);
-          break;
-        case 1:
-          msg = getUserData(response, message);
-          break;
-        default :
+    	if (Globals.userState == 0) {
+          msg = functions.helloMessage(response, message);
+      } else if (Globals.userState == 1) {
+          msg = functions.getUserData(response, message);
+      } else {
           msg = selectFlow(response, message);
-      };
-      client.sendMessage(msg);
+      }
+	client.sendMessage(msg);
     }).catch((err) => console.error(err));
 
       // send a message to some user
@@ -70,84 +70,14 @@ client.addNotificationReceiver(true, function(notification) {
   // TODO: Processe a notificação recebida
 });
 
-function buildTextMessage(content, to) {
-  return {
-    id: Lime.Guid(),
-    type: "text/plain",
-    content: content,
-    to: to
-  };
-}
-
-function buildMenuMessage(to, contentText, contentOptions){
-  return {
-    id: Lime.Guid(),
-    to: to,
-    type: "application/vnd.lime.select+json",
-    content: {
-      text: contentText,
-      options: contentOptions
-    }
-  };
-}
-
-function helloMessage(response, message){
-  userState = 1;
-  var text = "Olá "+ response.resource.fullName +", em que posso ajudar?";
-  var options = [
-    {
-      "order": 1,
-      "text": "Estou inadimplente"
-    },
-    {
-      "order": 2,
-      "text": "Esqueci de pagar"
-    },
-    {
-      "order": 3,
-      "text": "Não lembro de pagar"
-    }
-  ];
-  return buildMenuMessage(message.from, text, options);
-}
-
-function getUserData(response, message) {
-    var msgContent = "Ok "+ response.resource.fullName +"! Mas antes de tudo eu preciso saber o seu CPF, para que eu possa te encontrar no meu banco de dados";
-
-    userState = 2;
-    flowSelection = parseInt(message.content);
-    return buildTextMessage(msgContent, message.from);
-}
-
-function byeMessage(message){
-  userState = 0;
-  var msgContent = "Ok então! Precisando é só me chamar ;)";
-  return buildTextMessage(msgContent, message.from);
-}
-
 function notUnderstandMessage(response, message){
   var msgContent = "Desculpe "+ response.resource.fullName +", não consegui te entender. Vamos tentar de novo?";
-  return buildTextMessage(msgContent, message.from);
+  return functions.buildTextMessage(msgContent, message.from);
 }
 
-function canIHelpMessage(message){
-  var msgContent = "\nPosso te ajudar com algo mais?"
-  var options = [
-    {
-      "order": 1,
-      "text": "Sim"
-    },
-    {
-      "order": 2,
-      "text": "Não"
-    }
-  ];
-  return buildMenuMessage(message.from, msgContent, options);
-}
-
-function selectFlow(response, message) {  
-  console.log(flowSelection);
-  switch (flowSelection) {
+function selectFlow(response, message) {
+  console.log(Globals.flowSelection);
+  switch (Globals.flowSelection) {
     case 1:
         return flowOne.do(response, message);
     case 2:

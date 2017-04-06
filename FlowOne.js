@@ -1,10 +1,18 @@
 'use strict';
 let Lime = require('lime-js');
+let Globals = require('./Globals');
+let Functions = require('./Functions');
+var functions = new Functions();
 
 class FlowOne {
     constructor(client) {
         this._userState = 2;
         this._client = client;
+    }
+
+    teste() {
+    	Globals.flowSelection = 3;
+    	console.log(Globals.flowSelection);
     }
 
     do (response, message) {
@@ -26,7 +34,7 @@ class FlowOne {
             case 8:
                 return this._level8Message(response, message);
             case 9:
-                return this._byeMessage(message);
+                return this._byeMessage(response, message);
             default:
                 return this._notUnderstandMessage(response, message);
         }
@@ -34,7 +42,7 @@ class FlowOne {
 
     _level2Message(response, message) {
         this._userState = 3;
-        var msgContent = "Ok, te achei! Então, pelo o que eu vi esses são os seus dados: \n\nNome: " + response.resource.fullName + "\nIdade: 26 anos\nVeículo: Fusca Azul\nPagamentos atrasados: 6/20";
+        var msgContent = "Ok, te achei! Então, pelo o que eu vi esses são os seus dados: \n\nNome: " + response.resource.fullName + "\nIdade: 26 anos\nVeículo: Fusca Azul\nPagamentos atrasados: 6/20\n\n Esse é você mesmo? ";
         var options = [
           {
             "order": 1,
@@ -50,26 +58,33 @@ class FlowOne {
     }
 
     _level3Message(response, message) {
-        this._userState = 4;
-        var msgContent = "Então " + response.resource.fullName + " eu posso te ajudar com uma das opções abaixo:";
-        var options = [
-          {
-            "order": 1,
-            "text": "Renegociar dívida"
-          },
-          {
-            "order": 2,
-            "text": "Pagar parcial dívida"
-          },
-          {
-            "order": 3,
-            "text": "Quitar dívida"
-          },
-        ];
-        return this._buildMenuMessage(message.from, msgContent, options);
+        var resp = parseInt(message.content);
+        var msgContent;
+    		if (resp == 1) {
+	        this._userState = 4;
+	        msgContent = "Então " + response.resource.fullName + " eu posso te ajudar com uma das opções abaixo:";
+	        var options = [
+	          {
+	            "order": 1,
+	            "text": "Renegociar dívida"
+	          },
+	          {
+	            "order": 2,
+	            "text": "Pagar parcial dívida"
+	          },
+	          {
+	            "order": 3,
+	            "text": "Quitar dívida"
+	          },
+	        ];
+        	  return this._buildMenuMessage(message.from, msgContent, options);
+	      } else if (resp == 2) {
+	      	this._userState = 2;
+	      	return functions.getUserDataAgain(response, message);
+	      }
     }
 
-    _level4Message(response, message) {     
+    _level4Message(response, message) {
         var resp = parseInt(message.content);
         var msgContent;
         var options;
@@ -122,7 +137,7 @@ class FlowOne {
                 }
             ];
         }
-        
+
         return this._buildMenuMessage(message.from, msgContent, options);
     }
 
@@ -180,22 +195,35 @@ class FlowOne {
             ];
             msgContent = this._buildMenuMessage(message.from, msgContent, options);
         }
-        
+
         return msg;
     }
 
     _level8Message(response, message) {
-        var msg = this._buildTextMessage("Ah, você prefere por email? Sem problemas!\nEm breve você receberá um email nosso então :)", message.from);
-        this._client.sendMessage(msg);
-
-        this._userState = 9;
-        return this._canIHelpMessage(message);
+	    	resp = parseInt(message.content);
+	    	if (resp == 1) {
+	    		var msg = this._buildTextMessage("Combinado! \nEm breve você receberá um contato nosso então :)", message.from);
+		      this._client.sendMessage(msg);
+	    	} else if (resp == 2) {
+		      var msg = this._buildTextMessage("Ah, você prefere por email? Sem problemas!\nEm breve você receberá um email nosso então :)", message.from);
+		      this._client.sendMessage(msg);
+		}
+        	this._userState = 9;
+        	return this._canIHelpMessage(message);
     }
 
-     _byeMessage(message){
-        this._userState = 0;
-        var msgContent = "Ok então! Precisando é só me chamar ;)";
-        return this._buildTextMessage(msgContent, message.from);
+     _byeMessage(response, message){
+	    	var resp = parseInt(message.content);
+	    	var msgContent;
+	 	if (resp == 1) {
+	 		return functions.helloMessage(response, message);
+	 	} else if (resp == 2) {
+	        	var msgContent = "Ok então! Precisando é só me chamar ;)";
+        	}
+
+        	this._userState = 2;
+	      Globals.userState = 0;
+        	return this._buildTextMessage(msgContent, message.from);
     }
 
      _notUnderstandMessage(response, message){
