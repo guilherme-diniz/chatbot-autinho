@@ -191,6 +191,7 @@ class FlowOne {
                     "text": "Pode ser email?"
                 }
             ];
+            msgContent = this._buildMenuMessage(message.from, msgContent, options);
         } else {
             this._userState = 8;
             msgContent = "Entendo. Passei seus dados para o pessoal do financeiro e em breve eles vão te ligar para que juntos vocês possam resolver isso, tudo bem?"
@@ -211,30 +212,30 @@ class FlowOne {
     }
 
     _level8Message(response, message) {
-	    	resp = parseInt(message.content);
-	    	if (resp == 1) {
-	    		var msg = this._buildTextMessage("Combinado! \nEm breve você receberá um contato nosso então :)", message.from);
-		      this._client.sendMessage(msg);
-	    	} else if (resp == 2) {
-		      var msg = this._buildTextMessage("Ah, você prefere por email? Sem problemas!\nEm breve você receberá um email nosso então :)", message.from);
-		      this._client.sendMessage(msg);
+    	var resp = parseInt(message.content);
+    	if (resp == 1) {
+    		var msg = this._buildTextMessage("Combinado! \nEm breve você receberá um contato nosso então :)", message.from);
+	      this._client.sendMessage(msg);
+    	} else if (resp == 2) {
+	      var msg = this._buildTextMessage("Ah, você prefere por email? Sem problemas!\nEm breve você receberá um email nosso então :)", message.from);
+	      this._client.sendMessage(msg);
 		}
-        	this._userState = 9;
-        	return this._canIHelpMessage(message);
+    	this._userState = 9;
+    	return this._canIHelpMessage(message);
     }
 
      _byeMessage(response, message){
-	    	var resp = parseInt(message.content);
-	    	var msgContent;
+    	var resp = parseInt(message.content);
+    	var msgContent;
 	 	if (resp == 1) {
 	 		return functions.helloMessage(response, message);
 	 	} else if (resp == 2) {
-	        	var msgContent = "Ok então! Precisando é só me chamar ;)";
-        	}
+        	var msgContent = "Ok então! Precisando é só me chamar ;)";
+        }
 
-        	this._userState = 2;
-	      Globals.userState = 0;
-        	return this._buildTextMessage(msgContent, message.from);
+    	this._userState = 2;
+        Globals.userState = 0;
+    	return this._buildTextMessage(msgContent, message.from);
     }
 
      _notUnderstandMessage(response, message){
